@@ -1,0 +1,374 @@
+{
+  "info": {
+    "name": "Citas Médicas API",
+    "description": "Colección completa para el Sistema de Gestión de Citas Médicas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:3000/api" },
+    { "key": "TOKEN",    "value": "" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Dr. Luis Torres\",\n  \"email\": \"luis@medical.com\",\n  \"password\": \"123456\",\n  \"rol\": \"medico\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('TOKEN', res.data.token);",
+                  "  console.log('Token guardado:', res.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@medical.com\",\n  \"password\": \"password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Usuarios",
+      "item": [
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/usuarios",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Obtener usuario #1",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/usuarios/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/usuarios",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"María López\",\n  \"email\": \"maria@email.com\",\n  \"password\": \"123456\",\n  \"rol\": \"paciente\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar usuario #2",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/usuarios/2",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"María López Actualizada\",\n  \"email\": \"maria@email.com\",\n  \"rol\": \"paciente\",\n  \"activo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar usuario #2",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASE_URL}}/usuarios/2",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Especialidades",
+      "item": [
+        {
+          "name": "Listar especialidades",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/especialidades",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Obtener especialidad #1",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/especialidades/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Crear especialidad",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/especialidades",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Oftalmología\",\n  \"descripcion\": \"Diagnóstico y tratamiento de enfermedades oculares\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar especialidad #1",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/especialidades/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Medicina General\",\n  \"descripcion\": \"Atención primaria actualizada\",\n  \"activo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar especialidad #6",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASE_URL}}/especialidades/6",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍⚕️ Médicos",
+      "item": [
+        {
+          "name": "Listar médicos",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/medicos",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Obtener médico #1",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/medicos/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Crear médico",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/medicos",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": 2,\n  \"especialidad_id\": 2,\n  \"numero_licencia\": \"LIC-2024-001\",\n  \"telefono\": \"0991234567\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar médico #1",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/medicos/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"especialidad_id\": 1,\n  \"numero_licencia\": \"LIC-2024-001\",\n  \"telefono\": \"0999876543\",\n  \"activo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar médico #1",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASE_URL}}/medicos/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧑 Pacientes",
+      "item": [
+        {
+          "name": "Listar pacientes",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/pacientes",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Obtener paciente #1",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/pacientes/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Crear paciente",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/pacientes",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": 3,\n  \"fecha_nac\": \"1990-05-15\",\n  \"genero\": \"M\",\n  \"telefono\": \"0987654321\",\n  \"direccion\": \"Av. Solano 123, Cuenca\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar paciente #1",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/pacientes/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha_nac\": \"1990-05-15\",\n  \"genero\": \"M\",\n  \"telefono\": \"0987654321\",\n  \"direccion\": \"Nueva dirección 456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar paciente #1",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASE_URL}}/pacientes/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Citas",
+      "item": [
+        {
+          "name": "Listar citas",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/citas",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Obtener cita #1",
+          "request": {
+            "method": "GET",
+            "url": "{{BASE_URL}}/citas/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        },
+        {
+          "name": "Programar cita",
+          "request": {
+            "method": "POST",
+            "url": "{{BASE_URL}}/citas",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paciente_id\": 1,\n  \"medico_id\": 1,\n  \"fecha_hora\": \"2025-03-20T10:00:00\",\n  \"motivo\": \"Control de presión arterial\",\n  \"notas\": \"Paciente hipertenso\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar cita #1",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/citas/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha_hora\": \"2025-03-20T11:00:00\",\n  \"motivo\": \"Control de presión arterial\",\n  \"estado\": \"confirmada\",\n  \"notas\": \"Paciente confirmó asistencia\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cancelar cita #1",
+          "request": {
+            "method": "PUT",
+            "url": "{{BASE_URL}}/citas/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{TOKEN}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha_hora\": \"2025-03-20T11:00:00\",\n  \"motivo\": \"Control de presión\",\n  \"estado\": \"cancelada\",\n  \"notas\": \"Paciente no disponible\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar cita #1",
+          "request": {
+            "method": "DELETE",
+            "url": "{{BASE_URL}}/citas/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{TOKEN}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}

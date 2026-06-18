@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Gestión de Citas Médicas
+  description: |
+    API RESTful para gestión de citas médicas.
+    Incluye autenticación JWT, CRUD completo para todas las entidades y validación de datos.
+  version: 1.0.0
+  contact:
+    name: Proyecto Académico
+
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string }
+
+    Success:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+
+    Usuario:
+      type: object
+      properties:
+        id:         { type: integer }
+        nombre:     { type: string }
+        email:      { type: string, format: email }
+        rol:        { type: string, enum: [admin, medico, paciente] }
+        activo:     { type: integer, enum: [0, 1] }
+        created_at: { type: string, format: date-time }
+
+    Especialidad:
+      type: object
+      properties:
+        id:          { type: integer }
+        nombre:      { type: string }
+        descripcion: { type: string }
+        activo:      { type: integer }
+
+    Medico:
+      type: object
+      properties:
+        id:              { type: integer }
+        nombre:          { type: string }
+        email:           { type: string }
+        especialidad_id: { type: integer }
+        especialidad:    { type: string }
+        numero_licencia: { type: string }
+        telefono:        { type: string }
+        activo:          { type: integer }
+
+    Paciente:
+      type: object
+      properties:
+        id:        { type: integer }
+        nombre:    { type: string }
+        email:     { type: string }
+        fecha_nac: { type: string, format: date }
+        genero:    { type: string, enum: [M, F, otro] }
+        telefono:  { type: string }
+        direccion: { type: string }
+
+    Cita:
+      type: object
+      properties:
+        id:           { type: integer }
+        paciente_id:  { type: integer }
+        paciente:     { type: string }
+        medico_id:    { type: integer }
+        medico:       { type: string }
+        especialidad: { type: string }
+        fecha_hora:   { type: string, format: date-time }
+        motivo:       { type: string }
+        estado:       { type: string, enum: [programada, confirmada, cancelada, completada] }
+        notas:        { type: string }
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ── AUTH ──────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, email, password]
+              properties:
+                nombre:   { type: string, example: Juan Pérez }
+                email:    { type: string, example: juan@email.com }
+                password: { type: string, example: "123456" }
+                rol:      { type: string, enum: [admin, medico, paciente], example: paciente }
+      responses:
+        "201": { description: Usuario registrado }
+        "409": { description: Email ya existe }
+        "422": { description: Error de validación }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, example: admin@medical.com }
+                password: { type: string, example: "password" }
+      responses:
+        "200":
+          description: Login exitoso, retorna token JWT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      token:   { type: string }
+                      usuario: { $ref: '#/components/schemas/Usuario' }
+        "401": { description: Credenciales incorrectas }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Datos del usuario autenticado
+      responses:
+        "200": { description: OK }
+        "401": { description: No autenticado }
+
+  # ── USUARIOS ──────────────────────────────────────────────────
+  /usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar todos los usuarios (admin)
+      responses:
+        "200":
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Usuario' }
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, email, password]
+              properties:
+                nombre:   { type: string }
+                email:    { type: string }
+                password: { type: string }
+                rol:      { type: string, enum: [admin, medico, paciente] }
+      responses:
+        "201": { description: Creado }
+
+  /usuarios/{id}:
+    get:
+      tags: [Usuarios]
+      summary: Obtener usuario por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+        "404": { description: No encontrado }
+    put:
+      tags: [Usuarios]
+      summary: Actualizar usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, email, rol, activo]
+              properties:
+                nombre: { type: string }
+                email:  { type: string }
+                rol:    { type: string, enum: [admin, medico, paciente] }
+                activo: { type: boolean }
+      responses:
+        "200": { description: Actualizado }
+    delete:
+      tags: [Usuarios]
+      summary: Eliminar usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Eliminado }
+
+  # ── ESPECIALIDADES ─────────────────────────────────────────────
+  /especialidades:
+    get:
+      tags: [Especialidades]
+      summary: Listar especialidades
+      responses:
+        "200":
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Especialidad' }
+    post:
+      tags: [Especialidades]
+      summary: Crear especialidad (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre:      { type: string, example: Traumatología }
+                descripcion: { type: string }
+      responses:
+        "201": { description: Creada }
+
+  /especialidades/{id}:
+    get:
+      tags: [Especialidades]
+      summary: Obtener por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Especialidades]
+      summary: Actualizar especialidad (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, activo]
+              properties:
+                nombre:      { type: string }
+                descripcion: { type: string }
+                activo:      { type: boolean }
+      responses:
+        "200": { description: Actualizada }
+    delete:
+      tags: [Especialidades]
+      summary: Eliminar especialidad (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Eliminada }
+
+  # ── MÉDICOS ────────────────────────────────────────────────────
+  /medicos:
+    get:
+      tags: [Médicos]
+      summary: Listar médicos
+      responses:
+        "200":
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Medico' }
+    post:
+      tags: [Médicos]
+      summary: Registrar médico (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usuario_id, especialidad_id, numero_licencia]
+              properties:
+                usuario_id:      { type: integer, example: 2 }
+                especialidad_id: { type: integer, example: 1 }
+                numero_licencia: { type: string,  example: "LIC-001" }
+                telefono:        { type: string,  example: "0991234567" }
+      responses:
+        "201": { description: Creado }
+
+  /medicos/{id}:
+    get:
+      tags: [Médicos]
+      summary: Obtener médico por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Médicos]
+      summary: Actualizar médico (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [especialidad_id, numero_licencia, activo]
+              properties:
+                especialidad_id: { type: integer }
+                numero_licencia: { type: string }
+                telefono:        { type: string }
+                activo:          { type: boolean }
+      responses:
+        "200": { description: Actualizado }
+    delete:
+      tags: [Médicos]
+      summary: Eliminar médico (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Eliminado }
+
+  # ── PACIENTES ─────────────────────────────────────────────────
+  /pacientes:
+    get:
+      tags: [Pacientes]
+      summary: Listar pacientes
+      responses:
+        "200":
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Paciente' }
+    post:
+      tags: [Pacientes]
+      summary: Registrar paciente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usuario_id, fecha_nac, genero]
+              properties:
+                usuario_id: { type: integer, example: 3 }
+                fecha_nac:  { type: string, format: date, example: "1990-05-15" }
+                genero:     { type: string, enum: [M, F, otro] }
+                telefono:   { type: string }
+                direccion:  { type: string }
+      responses:
+        "201": { description: Creado }
+
+  /pacientes/{id}:
+    get:
+      tags: [Pacientes]
+      summary: Obtener paciente por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Pacientes]
+      summary: Actualizar paciente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fecha_nac, genero]
+              properties:
+                fecha_nac: { type: string, format: date }
+                genero:    { type: string, enum: [M, F, otro] }
+                telefono:  { type: string }
+                direccion: { type: string }
+      responses:
+        "200": { description: Actualizado }
+    delete:
+      tags: [Pacientes]
+      summary: Eliminar paciente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Eliminado }
+
+  # ── CITAS ─────────────────────────────────────────────────────
+  /citas:
+    get:
+      tags: [Citas]
+      summary: Listar citas
+      responses:
+        "200":
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Cita' }
+    post:
+      tags: [Citas]
+      summary: Programar cita
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paciente_id, medico_id, fecha_hora, motivo]
+              properties:
+                paciente_id: { type: integer, example: 1 }
+                medico_id:   { type: integer, example: 1 }
+                fecha_hora:  { type: string, format: date-time, example: "2025-03-15T09:00:00" }
+                motivo:      { type: string, example: "Control anual" }
+                notas:       { type: string }
+      responses:
+        "201": { description: Programada }
+        "409": { description: Conflicto de horario }
+
+  /citas/{id}:
+    get:
+      tags: [Citas]
+      summary: Obtener cita por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Citas]
+      summary: Actualizar cita
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fecha_hora, motivo, estado]
+              properties:
+                fecha_hora: { type: string, format: date-time }
+                motivo:     { type: string }
+                estado:     { type: string, enum: [programada, confirmada, cancelada, completada] }
+                notas:      { type: string }
+      responses:
+        "200": { description: Actualizada }
+    delete:
+      tags: [Citas]
+      summary: Eliminar cita
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Eliminada }
