@@ -4,7 +4,7 @@ const swaggerUi    = require('swagger-ui-express');
 const fs           = require('fs');
 const path         = require('path');
 const YAML         = require('yaml');
-const { testConnection } = require('./config/database');
+const { testConnection } = require('./src/config/database');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -21,12 +21,12 @@ const swaggerDoc = YAML.parse(swaggerFile);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // ── Rutas ─────────────────────────────────────────────────────
-app.use('/api/auth',           require('./routes/auth.routes'));
-app.use('/api/usuarios',       require('./routes/usuarios.routes'));
-app.use('/api/especialidades', require('./routes/especialidades.routes'));
-app.use('/api/medicos',        require('./routes/medicos.routes'));
-app.use('/api/pacientes',      require('./routes/pacientes.routes'));
-app.use('/api/citas',          require('./routes/citas.routes'));
+app.use('/api/auth',           require('./src/routes/auth.routes'));
+app.use('/api/usuarios',       require('./src/routes/usuarios.routes'));
+app.use('/api/especialidades', require('./src/routes/especialidades.routes'));
+app.use('/api/medicos',        require('./src/routes/medicos.routes'));
+app.use('/api/pacientes',      require('./src/routes/pacientes.routes'));
+app.use('/api/citas',          require('./src/routes/citas.routes'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/', (req, res) =>
